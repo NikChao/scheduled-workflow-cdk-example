@@ -4,7 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import {ScheduledWorkflowStack} from '../lib/scheduled-workflow-cdk-stack';
 
 const app = new cdk.App();
-const env = { account: "AWS_ACCOUNT_ID", region: "AWS_REGION" };
+const env = { account: "692859939927", region: "ap-southeast-2" };
 
 new ScheduledWorkflowStack(app, 'ScheduledWorkflowStack', {
     env

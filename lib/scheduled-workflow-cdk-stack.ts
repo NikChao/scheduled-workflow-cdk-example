@@ -6,7 +6,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as sfnTasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as path from 'path';
-import {DefinitionBody, WaitTime} from "aws-cdk-lib/aws-stepfunctions";
+import {Choice, Condition, DefinitionBody, Succeed, WaitTime} from "aws-cdk-lib/aws-stepfunctions";
 import {Duration} from "aws-cdk-lib";
 
 export class ScheduledWorkflowStack extends cdk.Stack {
@@ -23,15 +23,20 @@ export class ScheduledWorkflowStack extends cdk.Stack {
 
     // Define a simple Step Function task (replace with actual logic)
     const task = new sfnTasks.LambdaInvoke(this, 'StepFunctionHappyTask', {
-      lambdaFunction
+      lambdaFunction,
+      outputPath: '$.Payload'
     });
 
     const wait = new sfn.Wait(this, 'WaitTask', {
-      time: WaitTime.duration(Duration.seconds(5)),
+      time: WaitTime.duration(Duration.seconds(1)),
     });
 
+    const checkRowsProcessed = new Choice(this, 'Check Rows Processed')
+      .when(Condition.numberLessThan('$.rowsProcessed', 100), wait.next(task))
+      .otherwise(new Succeed(this, 'Finish'));
+
     // Feel free to chain more!
-    const steps = sfn.Chain.start(wait).next(task);
+    const steps = sfn.Chain.start(task).next(checkRowsProcessed);
 
     // Define the Step Function state machine
     const definitionBody = DefinitionBody.fromChainable(steps);
